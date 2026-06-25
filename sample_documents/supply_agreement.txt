@@ -1,0 +1,45 @@
+SUPPLY AGREEMENT
+
+This Supply Agreement ("Agreement") is entered into between the Supplier and the Buyer, effective as of January 1, 2025.
+
+1. DEFINITIONS
+
+"Supplier" means ABC Manufacturing Ltd, a company incorporated in England and Wales.
+"Buyer" means XYZ Retail Group plc.
+"Products" means the goods described in Schedule A attached hereto.
+
+2. SUPPLIER OBLIGATIONS
+
+The Supplier shall deliver the Products to the Buyer's designated warehouse within 14 days of receiving a purchase order.
+The Supplier must maintain adequate insurance coverage for all Products in transit.
+The Supplier shall notify the Buyer within 5 days of any delay in delivery.
+The Supplier will provide monthly quality reports to the Buyer.
+
+3. BUYER OBLIGATIONS
+
+The Buyer shall pay all invoices within 30 days of receipt.
+The Buyer must provide accurate forecast data to the Supplier on a quarterly basis.
+The Buyer will inspect all delivered Products within 10 days of receipt.
+
+4. PAYMENT TERMS
+
+Payment shall be made by bank transfer to the account specified by the Supplier.
+If payment is not received within 45 days, the Supplier may charge interest at 2% per month.
+The Buyer shall reimburse the Supplier for all reasonable costs incurred in collecting overdue payments.
+
+5. CONDITIONS
+
+If the Supplier fails to deliver Products within the agreed timeframe, the Buyer may cancel the affected purchase order.
+Subject to the Buyer's compliance with payment terms, the Supplier shall maintain priority production capacity.
+Provided that the Buyer gives 60 days written notice, the Supplier may adjust pricing annually.
+
+6. TERMINATION
+
+Either party may terminate this Agreement by giving 90 days written notice.
+The Supplier may terminate immediately if the Buyer fails to pay any invoice within 60 days.
+Upon termination, the Supplier shall deliver all outstanding Products and the Buyer shall pay all outstanding invoices within 30 days.
+
+7. WARRANTIES
+
+The Supplier warrants that all Products shall conform to the specifications in Schedule A.
+The Supplier shall indemnify the Buyer against any claims arising from defective Products.

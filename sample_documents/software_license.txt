@@ -1,0 +1,51 @@
+SOFTWARE LICENSE AGREEMENT
+
+This Software License Agreement ("Agreement") is between the Licensor and the Licensee.
+
+1. DEFINITIONS
+
+"Licensor" means DataFlow Systems Inc.
+"Licensee" means Global Finance Corp.
+"Software" means the DataFlow Analytics Platform version 3.0 and all associated documentation.
+
+2. GRANT OF LICENSE
+
+The Licensor grants the Licensee a non-exclusive license to use the Software for internal business purposes.
+The Licensee may install the Software on up to 50 workstations.
+The Licensee shall not sublicense, distribute, or transfer the Software to any third party.
+
+3. LICENSEE OBLIGATIONS
+
+The Licensee shall pay the annual license fee of $120,000 within 30 days of the invoice date.
+The Licensee must implement reasonable security measures to prevent unauthorized access to the Software.
+The Licensee shall report any security breaches to the Licensor within 24 hours of discovery.
+The Licensee will not reverse engineer, decompile, or disassemble the Software.
+
+4. LICENSOR OBLIGATIONS
+
+The Licensor shall provide Software updates and patches within 90 days of release.
+The Licensor must maintain 99.5% uptime for the hosted components of the Software.
+The Licensor will provide technical support during business hours via email and phone.
+
+5. PAYMENT AND FEES
+
+License fees shall be invoiced annually in advance.
+If payment is not received within 60 days, the Licensor may suspend access to the Software.
+The Licensee shall reimburse the Licensor for all costs of collection of overdue amounts.
+
+6. CONDITIONS
+
+If the Licensor fails to maintain the agreed uptime, the Licensee may claim a service credit of 10% of the monthly fee.
+Subject to the Licensee's payment of all fees, the Licensor shall provide disaster recovery services.
+Provided that the Licensee gives 90 days notice, the Licensee may increase the number of licensed workstations.
+
+7. TERMINATION
+
+The Licensor may terminate this Agreement if the Licensee breaches any material term and fails to cure within 30 days.
+The Licensee may terminate by giving 60 days written notice.
+Upon termination, the Licensee shall cease all use of the Software and destroy all copies within 15 days.
+
+8. CONFIDENTIALITY
+
+Each party shall maintain the confidentiality of the other party's proprietary information.
+The Licensee must ensure all employees with access to the Software are bound by confidentiality obligations.
