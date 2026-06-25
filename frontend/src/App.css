@@ -128,6 +128,17 @@
   line-height: 1.5;
 }
 
+.api-error-banner {
+  margin-top: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: var(--radius);
+  color: #92400E;
+  font-size: 0.85rem;
+  max-width: 640px;
+}
+
 .page-body {
   padding: 1.75rem 2.5rem 2.5rem;
   flex: 1;

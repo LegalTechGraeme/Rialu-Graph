@@ -44,17 +44,34 @@ export default function App() {
   const [statuses, setStatuses] = useState([])
   const [documents, setDocuments] = useState([])
   const [selectedDocId, setSelectedDocId] = useState(null)
+  const [loadError, setLoadError] = useState(null)
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), [])
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [s, d] = await Promise.all([getProcessingStatus(), getDocuments()])
+        const s = await getProcessingStatus()
         setStatuses(s)
-        setDocuments(d)
+        try {
+          const d = await getDocuments()
+          setDocuments(d)
+          setLoadError(null)
+        } catch (docErr) {
+          console.error(docErr)
+          setDocuments(s.map(st => ({
+            id: st.document_id,
+            title: st.title,
+            status: st.status,
+            upload_timestamp: null,
+            clause_count: st.clauses_extracted,
+            obligation_count: st.obligations_extracted,
+          })))
+          setLoadError('Document library API is unavailable — list only. Redeploy the backend to view full text.')
+        }
       } catch (err) {
         console.error(err)
+        setLoadError(err?.message || 'Could not load data from the server.')
       }
     }
     load()
@@ -63,7 +80,21 @@ export default function App() {
   }, [refreshKey])
 
   const handleUploaded = (doc) => {
-    if (doc?.id) setSelectedDocId(doc.id)
+    if (doc?.id) {
+      setSelectedDocId(doc.id)
+      setDocuments(prev => {
+        const exists = prev.some(d => d.id === doc.id)
+        if (exists) return prev
+        return [{
+          id: doc.id,
+          title: doc.title,
+          status: doc.status || 'pending',
+          upload_timestamp: doc.upload_timestamp || new Date().toISOString(),
+          clause_count: 0,
+          obligation_count: 0,
+        }, ...prev]
+      })
+    }
     refresh()
     setActiveTab('documents')
   }
@@ -108,6 +139,9 @@ export default function App() {
         <header className="page-header">
           <h2>{meta.title}</h2>
           <p>{meta.desc}</p>
+          {loadError && (
+            <div className="api-error-banner">{loadError}</div>
+          )}
         </header>
 
         <div className="page-body">
@@ -125,6 +159,7 @@ export default function App() {
               documents={documents}
               selectedDocId={selectedDocId}
               onSelectDoc={setSelectedDocId}
+              onDeleted={refresh}
               refreshKey={refreshKey}
             />
           )}

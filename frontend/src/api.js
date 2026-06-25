@@ -65,6 +65,10 @@ export async function uploadText(title, rawText, source) {
   return postForm('/ingestion/upload/text', form)
 }
 
+export async function deleteDocument(documentId) {
+  return apiFetch(`/ingestion/documents/${documentId}`, { method: 'DELETE' })
+}
+
 export async function getDocuments() {
   return apiFetch('/ingestion/documents')
 }

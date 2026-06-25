@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getDocument, getDocumentClauses } from '../api'
+import { getDocument, getDocumentClauses, deleteDocument } from '../api'
 
 function formatDate(iso) {
   if (!iso) return '—'
@@ -13,12 +13,13 @@ function ClauseBadge({ type }) {
   return <span className={cls}>{type || 'clause'}</span>
 }
 
-export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc, refreshKey }) {
+export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc, onDeleted, refreshKey }) {
   const [detail, setDetail] = useState(null)
   const [clauses, setClauses] = useState([])
   const [view, setView] = useState('text')
   const [loading, setLoading] = useState(false)
   const [clausesLoading, setClausesLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState(null)
   const [clausesError, setClausesError] = useState(null)
 
@@ -94,6 +95,23 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
     return () => { cancelled = true }
   }, [view, activeId, clauses.length])
 
+  const handleDelete = async () => {
+    if (!activeId || deleting) return
+    const title = activeMeta?.title || 'this document'
+    if (!window.confirm(`Delete "${title}" and all its extracted data? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      await deleteDocument(activeId)
+      onSelectDoc(null)
+      onDeleted?.()
+    } catch (err) {
+      console.error(err)
+      setError('Could not delete document. Try again in a moment.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (!documents.length) {
     return (
       <div className="card empty-state">
@@ -159,6 +177,14 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
                   disabled={activeMeta?.status === 'processing'}
                 >
                   Extracted Clauses
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{ color: 'var(--danger)', marginLeft: '0.5rem' }}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
                 </button>
               </div>
             </div>

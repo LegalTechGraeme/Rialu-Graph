@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from db.models import Clause, Document, Obligation
+from db.models import Clause, Document, Obligation, Relationship
 from models.schemas import (
     ClauseResponse,
     DocumentResponse,
@@ -25,6 +25,16 @@ def create_document(db: Session, title: str, raw_text: str, source: Optional[str
 
 def get_document(db: Session, document_id: str) -> Optional[Document]:
     return db.query(Document).filter(Document.id == document_id).first()
+
+
+def delete_document(db: Session, document_id: str) -> bool:
+    doc = get_document(db, document_id)
+    if not doc:
+        return False
+    db.query(Relationship).filter(Relationship.document_id == document_id).delete()
+    db.delete(doc)
+    db.commit()
+    return True
 
 
 def list_documents(db: Session) -> list[DocumentResponse]:
