@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import get_allowed_origins
+from config import get_allowed_origins, get_cors_origin_regex
 from db.database import init_db
 from routes import analysis, ingestion, query
 
@@ -21,9 +21,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_cors_regex = get_cors_origin_regex()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),
+    allow_origin_regex=_cors_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+import threading
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from db.database import SessionLocal, get_db
@@ -23,9 +25,13 @@ def _run_pipeline(document_id: str):
         db.close()
 
 
+def _start_pipeline(document_id: str):
+    """Run NLP in a background thread so uploads stay responsive on a single worker."""
+    threading.Thread(target=_run_pipeline, args=(document_id,), daemon=True).start()
+
+
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_single(
-    background_tasks: BackgroundTasks,
     title: str = Form(...),
     source: str = Form(None),
     file: UploadFile = File(...),
@@ -34,7 +40,7 @@ async def upload_single(
     content = await file.read()
     raw_text = content.decode("utf-8", errors="replace")
     doc = create_document(db, title=title, raw_text=raw_text, source=source or file.filename)
-    background_tasks.add_task(_run_pipeline, doc.id)
+    _start_pipeline(doc.id)
     return DocumentResponse(
         id=doc.id,
         title=doc.title,
@@ -46,14 +52,13 @@ async def upload_single(
 
 @router.post("/upload/text", response_model=DocumentResponse)
 async def upload_text(
-    background_tasks: BackgroundTasks,
     title: str = Form(...),
     raw_text: str = Form(...),
     source: str = Form(None),
     db: Session = Depends(get_db),
 ):
     doc = create_document(db, title=title, raw_text=raw_text, source=source)
-    background_tasks.add_task(_run_pipeline, doc.id)
+    _start_pipeline(doc.id)
     return DocumentResponse(
         id=doc.id,
         title=doc.title,
@@ -65,7 +70,6 @@ async def upload_text(
 
 @router.post("/upload/batch", response_model=list[DocumentResponse])
 async def upload_batch(
-    background_tasks: BackgroundTasks,
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
@@ -75,7 +79,7 @@ async def upload_batch(
         raw_text = content.decode("utf-8", errors="replace")
         title = file.filename or "Untitled Document"
         doc = create_document(db, title=title, raw_text=raw_text, source=file.filename)
-        background_tasks.add_task(_run_pipeline, doc.id)
+        _start_pipeline(doc.id)
         results.append(DocumentResponse(
             id=doc.id,
             title=doc.title,
@@ -84,31 +88,3 @@ async def upload_batch(
             status=doc.status,
         ))
     return results
-
-
-@router.get("/documents", response_model=list[DocumentResponse])
-def get_documents(db: Session = Depends(get_db)):
-    return list_documents(db)
-
-
-@router.get("/documents/{document_id}", response_model=DocumentDetail)
-def get_document_by_id(document_id: str, db: Session = Depends(get_db)):
-    doc = get_document(db, document_id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    docs = list_documents(db)
-    meta = next((d for d in docs if d.id == document_id), None)
-    if not meta:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    return DocumentDetail(
-        id=doc.id,
-        title=doc.title,
-        raw_text=doc.raw_text,
-        source=doc.source,
-        upload_timestamp=doc.upload_timestamp,
-        status=doc.status,
-        clause_count=meta.clause_count,
-        obligation_count=meta.obligation_count,
-    )
