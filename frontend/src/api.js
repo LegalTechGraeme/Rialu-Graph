@@ -1,12 +1,9 @@
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || (import.meta.env.DEV ? '/api' : '')
+// Default /api — on Vercel this is proxied to Render (same origin, no CORS issues).
+// Local dev uses the Vite proxy in vite.config.js.
+// Only set VITE_API_URL if you need to override (e.g. point at a different backend).
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
 
 async function apiFetch(path, options = {}) {
-  if (!API_BASE) {
-    throw new Error(
-      'VITE_API_URL is not set on Vercel. Go to Vercel → Settings → Environment Variables and add: https://rialu-graph.onrender.com/api — then redeploy.'
-    )
-  }
-
   const url = `${API_BASE}${path}`
   let res
   try {
@@ -15,7 +12,7 @@ async function apiFetch(path, options = {}) {
     const msg = err?.message || 'Network error'
     if (msg === 'Load failed' || msg === 'Failed to fetch') {
       throw new Error(
-        `Cannot reach the API at ${API_BASE}. Render may be waking up (wait 30s), or check ALLOWED_ORIGINS on Render includes your Vercel URL.`
+        'Cannot reach the API. If on Vercel, remove VITE_API_URL env var (use /api proxy) and redeploy. Otherwise wait 30s for Render to wake up.'
       )
     }
     throw err
@@ -29,11 +26,6 @@ async function apiFetch(path, options = {}) {
 }
 
 async function postForm(path, form) {
-  if (!API_BASE) {
-    throw new Error(
-      'VITE_API_URL is not set on Vercel. Add https://rialu-graph.onrender.com/api in Vercel env vars and redeploy.'
-    )
-  }
   const url = `${API_BASE}${path}`
   let res
   try {
@@ -42,7 +34,7 @@ async function postForm(path, form) {
     const msg = err?.message || 'Network error'
     if (msg === 'Load failed' || msg === 'Failed to fetch') {
       throw new Error(
-        `Cannot reach the API at ${API_BASE}. Wait 30s for Render to wake up, then try once.`
+        'Cannot reach the API. If on Vercel, remove VITE_API_URL env var (use /api proxy) and redeploy. Otherwise wait 30s for Render to wake up.'
       )
     }
     throw err
