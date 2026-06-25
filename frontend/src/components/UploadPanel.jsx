@@ -7,46 +7,68 @@ export default function UploadPanel({ onUploaded }) {
   const [mode, setMode] = useState('file')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
   const fileRef = useRef()
   const batchRef = useRef()
+  const submittingRef = useRef(false)
 
   const handleSingleUpload = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     setLoading(true)
     setError(null)
+    setSuccess(null)
     try {
+      let doc
       if (mode === 'file') {
         const file = fileRef.current?.files[0]
         if (!file) throw new Error('Please select a file')
-        await uploadSingle(title || file.name, file)
+        doc = await uploadSingle(title || file.name, file)
       } else {
         if (!text.trim()) throw new Error('Please enter document text')
-        await uploadText(title || 'Untitled Document', text)
+        doc = await uploadText(title || 'Untitled Document', text)
       }
       setTitle('')
       setText('')
       if (fileRef.current) fileRef.current.value = ''
-      onUploaded?.()
+      setSuccess(`"${doc.title}" uploaded. Analysis is running in the background.`)
+      onUploaded?.(doc)
     } catch (err) {
-      setError(err.message)
+      const msg = err?.message || 'Upload failed'
+      setError(
+        msg === 'Load failed' || msg === 'Failed to fetch'
+          ? 'Upload could not reach the server. Wait a moment (Render may be waking up) and try once — do not click multiple times.'
+          : msg
+      )
     } finally {
       setLoading(false)
+      submittingRef.current = false
     }
   }
 
   const handleBatchUpload = async (e) => {
     const files = Array.from(e.target.files || [])
-    if (!files.length) return
+    if (!files.length || submittingRef.current) return
+    submittingRef.current = true
     setLoading(true)
     setError(null)
+    setSuccess(null)
     try {
-      await uploadBatch(files)
+      const docs = await uploadBatch(files)
       if (batchRef.current) batchRef.current.value = ''
-      onUploaded?.()
+      setSuccess(`${docs.length} document(s) uploaded. Analysis is running in the background.`)
+      onUploaded?.(docs[0])
     } catch (err) {
-      setError(err.message)
+      const msg = err?.message || 'Upload failed'
+      setError(
+        msg === 'Load failed' || msg === 'Failed to fetch'
+          ? 'Upload could not reach the server. Wait a moment and try again.'
+          : msg
+      )
     } finally {
       setLoading(false)
+      submittingRef.current = false
     }
   }
 
@@ -67,12 +89,13 @@ export default function UploadPanel({ onUploaded }) {
           placeholder="e.g. Supply Agreement 2025"
           value={title}
           onChange={e => setTitle(e.target.value)}
+          disabled={loading}
         />
 
         {mode === 'file' ? (
           <>
             <label className="field-label">Select file (.txt)</label>
-            <input ref={fileRef} type="file" accept=".txt,.md,.text" />
+            <input ref={fileRef} type="file" accept=".txt,.md,.text" disabled={loading} />
           </>
         ) : (
           <>
@@ -82,21 +105,24 @@ export default function UploadPanel({ onUploaded }) {
               value={text}
               onChange={e => setText(e.target.value)}
               rows={10}
+              disabled={loading}
             />
           </>
         )}
 
         <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '0.5rem' }}>
-          {loading ? 'Uploading & analysing…' : 'Upload & analyse'}
+          {loading ? 'Uploading…' : 'Upload & analyse'}
         </button>
+        <p className="field-hint">Click once and wait — duplicate uploads overload the server.</p>
       </form>
 
       <div className="batch-zone">
         <label className="field-label">Batch upload</label>
         <p className="field-hint">Select multiple .txt files to ingest at once</p>
-        <input ref={batchRef} type="file" accept=".txt,.md,.text" multiple onChange={handleBatchUpload} />
+        <input ref={batchRef} type="file" accept=".txt,.md,.text" multiple onChange={handleBatchUpload} disabled={loading} />
       </div>
 
+      {success && <div className="upload-success">{success}</div>}
       {error && <div className="upload-error">{error}</div>}
 
       <style>{`
@@ -114,6 +140,10 @@ export default function UploadPanel({ onUploaded }) {
         }
         .upload-error {
           background: #FEF2F2; border: 1px solid #FECACA; color: var(--danger);
+          padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.875rem;
+        }
+        .upload-success {
+          background: #ECFDF5; border: 1px solid #A7F3D0; color: var(--success);
           padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.875rem;
         }
       `}</style>

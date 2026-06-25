@@ -62,7 +62,8 @@ export default function App() {
     return () => clearInterval(interval)
   }, [refreshKey])
 
-  const handleUploaded = () => {
+  const handleUploaded = (doc) => {
+    if (doc?.id) setSelectedDocId(doc.id)
     refresh()
     setActiveTab('documents')
   }

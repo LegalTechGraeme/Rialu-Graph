@@ -14,7 +14,11 @@ def _run_pipeline(document_id: str):
     try:
         document = get_document(db, document_id)
         if document:
-            process_document(db, document)
+            try:
+                process_document(db, document)
+            except Exception:
+                document.status = "failed"
+                db.commit()
     finally:
         db.close()
 

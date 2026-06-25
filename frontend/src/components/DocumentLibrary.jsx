@@ -18,7 +18,9 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
   const [clauses, setClauses] = useState([])
   const [view, setView] = useState('text')
   const [loading, setLoading] = useState(false)
+  const [clausesLoading, setClausesLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [clausesError, setClausesError] = useState(null)
 
   const activeId = selectedDocId || documents[0]?.id
 
@@ -27,6 +29,7 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
     if (!selectedDocId && documents[0]) onSelectDoc(documents[0].id)
   }, [documents, activeId, selectedDocId, onSelectDoc])
 
+  // Load document text only — clauses are fetched on demand (large docs can be 250KB+)
   useEffect(() => {
     if (!activeId) return
     let cancelled = false
@@ -36,22 +39,29 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
       setError(null)
       setDetail(null)
       setClauses([])
+      setClausesError(null)
+      setView('text')
       try {
-        const [doc, cls] = await Promise.all([
-          getDocument(activeId),
-          getDocumentClauses(activeId),
-        ])
+        const doc = await getDocument(activeId)
         if (cancelled) return
+        if (!doc?.raw_text && doc?.status === 'processing') {
+          setDetail(doc)
+          return
+        }
         if (!doc?.raw_text) {
           setError('Document text could not be loaded. Try refreshing the page.')
           return
         }
         setDetail(doc)
-        setClauses(cls)
       } catch (err) {
         if (!cancelled) {
           console.error(err)
-          setError('Failed to load document. Make sure the backend is running.')
+          const msg = err?.message || ''
+          setError(
+            msg === 'Load failed' || msg === 'Failed to fetch'
+              ? 'Could not load document — the server may be busy processing. Wait 30 seconds and try again.'
+              : 'Failed to load document. Make sure the backend is running.'
+          )
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -61,6 +71,29 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
     return () => { cancelled = true }
   }, [activeId, refreshKey])
 
+  useEffect(() => {
+    if (view !== 'clauses' || !activeId || clauses.length > 0) return
+    let cancelled = false
+
+    const loadClauses = async () => {
+      setClausesLoading(true)
+      setClausesError(null)
+      try {
+        const cls = await getDocumentClauses(activeId)
+        if (!cancelled) setClauses(cls)
+      } catch (err) {
+        if (!cancelled) {
+          console.error(err)
+          setClausesError('Could not load clauses — try again in a moment.')
+        }
+      } finally {
+        if (!cancelled) setClausesLoading(false)
+      }
+    }
+    loadClauses()
+    return () => { cancelled = true }
+  }, [view, activeId, clauses.length])
+
   if (!documents.length) {
     return (
       <div className="card empty-state">
@@ -69,6 +102,8 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
       </div>
     )
   }
+
+  const activeMeta = documents.find(d => d.id === activeId)
 
   return (
     <div className="grid-2">
@@ -112,17 +147,34 @@ export default function DocumentLibrary({ documents, selectedDocId, onSelectDoc,
               <div>
                 <h3>{detail.title}</h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                  {detail.clause_count} clauses · {detail.obligation_count} obligations · {formatDate(detail.upload_timestamp)}
+                  {activeMeta?.clause_count ?? detail.clause_count} clauses · {activeMeta?.obligation_count ?? detail.obligation_count} obligations · {formatDate(detail.upload_timestamp)}
+                  {activeMeta?.status === 'processing' && ' · analysing…'}
                 </p>
               </div>
               <div className="view-toggle">
                 <button className={`btn btn-ghost ${view === 'text' ? 'active' : ''}`} onClick={() => setView('text')}>Full Text</button>
-                <button className={`btn btn-ghost ${view === 'clauses' ? 'active' : ''}`} onClick={() => setView('clauses')}>Extracted Clauses</button>
+                <button
+                  className={`btn btn-ghost ${view === 'clauses' ? 'active' : ''}`}
+                  onClick={() => setView('clauses')}
+                  disabled={activeMeta?.status === 'processing'}
+                >
+                  Extracted Clauses
+                </button>
               </div>
             </div>
             <div className="doc-viewer">
               {view === 'text' ? (
-                <pre className="doc-text">{detail.raw_text}</pre>
+                detail.raw_text ? (
+                  <pre className="doc-text">{detail.raw_text}</pre>
+                ) : (
+                  <div className="empty-state" style={{ padding: '2rem' }}>
+                    <p>Document is still being analysed. Check back in a minute or watch the status badge update.</p>
+                  </div>
+                )
+              ) : clausesLoading ? (
+                <div className="empty-state" style={{ padding: '2rem' }}>Loading clauses…</div>
+              ) : clausesError ? (
+                <div className="empty-state" style={{ padding: '2rem' }}><p>{clausesError}</p></div>
               ) : (
                 <div className="clause-list">
                   {clauses.map((c, i) => (
